@@ -1,0 +1,67 @@
+{% extends 'detection_app/base.html' %}
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+  <!-- Canvas Drawing -->
+  <div class="bg-white p-6 rounded-2xl shadow-md">
+    <h2 class="text-xl font-semibold mb-4">✍️ Vẽ chữ số</h2>
+    <canvas id="draw-canvas" width="280" height="280" class="border-2 border-gray-300 rounded-md bg-white"></canvas>
+    <div class="mt-4 flex gap-4">
+      <button id="clear-btn" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Xoá</button>
+      <button id="predict-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Dự đoán</button>
+    </div>
+    <p id="canvas-result" class="mt-4 text-lg font-medium text-indigo-700"></p>
+  </div>
+
+  <!-- Upload Image -->
+  <div class="bg-white p-6 rounded-2xl shadow-md">
+    <h2 class="text-xl font-semibold mb-4">📂 Upload ảnh</h2>
+    <form method="post" enctype="multipart/form-data" action="{% url 'predict_file' %}" class="space-y-4">
+      {% csrf_token %}
+      <div class="flex flex-col gap-2">
+        {{ form.image }}
+      </div>
+      <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 w-full">Upload và dự đoán</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const canvas = document.getElementById('draw-canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+ctx.lineWidth = 18;
+ctx.lineCap = 'round';
+ctx.strokeStyle = 'black';
+ctx.fillStyle = 'white';
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+canvas.addEventListener('pointerdown', e => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
+canvas.addEventListener('pointermove', e => { if(drawing){ ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); }});
+canvas.addEventListener('pointerup', e => { drawing = false; });
+
+document.getElementById('clear-btn').addEventListener('click', ()=>{
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  document.getElementById('canvas-result').innerText='';
+});
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+document.getElementById('predict-btn').addEventListener('click', async ()=>{
+  const dataUrl = canvas.toDataURL('image/png');
+  const csrftoken = getCookie('csrftoken');
+  const res = await fetch('{% url "predict_draw" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+    body: JSON.stringify({ image: dataUrl })
+  });
+  const j = await res.json();
+  document.getElementById('canvas-result').innerText = 'Kết quả: ' + j.pred;
+});
+</script>
+{% endblock %}
