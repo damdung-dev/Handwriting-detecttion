@@ -15,7 +15,7 @@ Người dùng có thể upload ảnh chữ số viết tay và hệ thống s�
 ## ⚙️ Cài đặt môi trường
 
 1. Clone repository:
-git clone https://github.com/your-username/digit-recognition-django.git
+gh repo clone damdung-dev/Handwriting-detecttion
 cd digit-recognition-django
 
 2. Cài đặt thư viện:
@@ -63,3 +63,4 @@ Pillow – Xử lý ảnh
 💡 Ghi chú
 Mô hình sử dụng MNIST (28x28 grayscale).
 Người dùng có thể train lại model hoặc sử dụng pretrained model kèm theo.
+
